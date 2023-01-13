@@ -1,0 +1,34 @@
+strtol関数｜strto関数群(strtol, strtoul, strtoq, strtouq)
+
+文字列を整数系の数値に変換する関数。
+文字列中の最初に出現する数字の列を、第三引数で指定された基数で変換。
+
+long v = strtol("9", NULL, 10); // 9   == v
+double v = strtod("3.14", NULL); // 3.14 == v
+
+long v = strtol("99yen", NULL, 10); // 99 == v
+long v = strtol("  8", NULL, 10);   //  8 == v
+long v = strtol("76 5", NULL, 10);  // 76 == v
+
+strtol("11", NULL, 2);  //  3 ( 2進数)
+strtol("11", NULL, 8);  //  9 ( 8進数)
+strtol("11", NULL, 10); // 11 (10進数)
+strtol("11", NULL, 16); // 17 (16進数)
+
+strtol("0x11", NULL, 0); // 17 (16進数)
+strtol("011", NULL, 0);  //  9 ( 8進数)
+
+strtod("0x11", NULL); // 17   (16進表記からの変換)
+strtod("011", NULL);  // 11   (10進表記からの変換) => 8進表記には非対応
+strtod("1e3", NULL);  // 1000 (指数表記からの変換)
+strtof("nan", NULL);  // nan  (非数)
+
+(仕様)
+#include <stdlib.h>
+long strtol(const char *nptr, char **endptr, int base);
+unsigned long strtoul(const char *nptr, char **endptr, int base);
+long long strtoq(const char *nptr, char **endptr, int base);
+unsigned long long strtouq(const char *nptr, char **endptr, int base);
+
+参照先）
+https://marycore.jp/prog/c-lang/stdlib-strtol/
