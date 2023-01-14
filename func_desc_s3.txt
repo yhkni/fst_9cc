@@ -1,0 +1,165 @@
+(step3の見慣れないライブラリ関数)
+
+va_start(ap, fmt);  -----------> #include <stdarg.h>
+
+概要    va_list を初期化して、可変個引数の使用を可能にする
+ヘッダ  stdarg.h
+形式    #define va_start(ap, v)((ap)=(va_list)&(v)+sizeof(v))
+引数    ap  ---->   va_list型の変数
+        v   ---->   可変個引数でない最後の引数
+戻値    なし
+
+詳細    va_list　に、最初の可変個引数を指すポインタを指定。可変個引数には名前がなく、
+        直接的に指定すうることが出来ないため、可変個部分でない最後の仮引数の名前を
+        指定する。
+        そうして、マクロ内で計算によって可変個実引数を導き出している。
+        詳細　＊　https://programming-place.net/ppp/contents/c/appendix/reference/va_start.html
+
+注意    va_arg や　va_end を呼ぶ前に、必ず呼び出す。va_end前に
+        最初期化を目的に　va_startを呼び出してはならない。
+
+<サンプル>　上記URLより
+
+#include <stdio.h>
+#include <stdarg.h>
+#include <assert.h>
+
+void print(const char* format, ...);
+
+int main(void)
+{
+    print( "ddcd", 10, 20, 'x', 30 );
+    print( "ss", "abc", "def" );
+    print( "dfc", 50, 3.3f, 'Z' );
+}
+
+/*
+    標準出力へ任意の個数・型の値を出力する
+    引数：
+        format:     変換指定子を並べたもの。以下のいずれかとする。
+                        d … 符号付き整数型
+                        f … 実浮動小数点型
+                        c … 文字型
+                        s … 文字列型
+                    とする。
+                    たとえば、"dds" と指定すると、
+                    後続の実引数が 整数型, 整数型, 文字列型 の順番で並んでいるものと判断される。
+        ...:        出力する値のリスト
+*/
+void print(const char* format, ...)
+{
+    va_list args;
+    va_start( args, format );
+
+    for( const char* p = format; *p != '\0'; ++p ){
+        switch( *p ){
+        case 'd':
+            printf( "%d ", va_arg(args, int) );
+            break;
+        case 'f':
+            printf( "%f ", va_arg(args, double) );
+            break;
+        case 'c':
+            printf( "%c ", va_arg(args, char) );
+            break;
+        case 's':
+            printf( "%s ", va_arg(args, const char*) );
+            break;
+        default:
+            assert( !"不正な変換指定" );
+            break;
+        }
+    }
+    printf( "\n" );
+
+    va_end( args );
+}
+
+////////////////////////////////////////////////////
+
+vfprintf ---------> stdio.h
+
+概要    任意のストリームへ、変換指定に沿って変換された文字列を出力
+ヘッダ  stdio.h
+形式    int vfprintf(FILE* restrict stream, const char* restrict format, va_list args);
+
+引数    stream      出力先ストリーム
+        format      変換指定を含んだ、あるいは　プレーンな文字列
+        args        format　に対応する、　可変個引数リスト
+
+戻り値  出力した文字数　エラー時は負数
+
+詳細    仮引数が　...から　va_list　に変わった事を除き、　fprintfと同じ
+        https://programming-place.net/ppp/contents/c/appendix/reference/vfprintf.html
+
+注意    第三引数の　va_list型のオブジェクトは、　事前にva_startによる初期化が必要
+
+
+<サンプル>
+
+#include <stdio.h>
+#include <stdarg.h>     // -----> va_list
+#include <stdlib.h>
+
+static void warnig(FILE* fp, const char* str, ...);
+
+int main(void)
+{
+    int value = 100;
+
+    FILE* fp = fopen("test.txt", "w");
+    if(fp == NULL) {
+        exit( EXIT_FAILURE );
+    }
+
+    if(value != 0) {
+        warning( fp, "value: %d\n", value);
+    }
+    if ( fclose( fp ) == EOF ) {
+        fputs("ファイルクローズに失敗しました。\n", stderr );
+        exit(EXIT_FAILURE);
+    }
+}
+
+void warning(FILE* fp, const char* str, ...)
+{
+    va_list args;
+
+    va_start( args, str );
+
+    fprintf(fp, "[WARNING] ");
+    vfprintf( fp, str, args );
+
+    va_end( args );    
+}
+
+/////////////////////////////////////////////////////
+
+*isspace  ----> ctype.html
+
+概要    空白文字判定
+ヘッダ  ctype.h
+形式    int isspace(int c);
+引数    c       判定する文字
+戻り値  引数cが空白文字なら　0以外を返し、そうでなければ０を返す
+
+詳細    ロケールの　LC_TYPEの影響を受ける
+        ”C"　ロケールの下では、空白''　タブ\t　垂直タブ\v　復帰\r　書式送り\f
+        のいずれか
+
+その他　＊参照先　https://programming-place.net/ppp/contents/c/appendix/reference/isspace.html
+
+<サンプル>
+
+#include <stdio.h>
+#include <ctype.h>
+#include <limits.h>
+
+int main(void)
+{
+    for ( int i = 0; i < UCHAR_MAX; ++i ){
+        if( isspace(i)) {
+            printf( "%c (%x)\n", i, i);
+        }
+    }
+}
